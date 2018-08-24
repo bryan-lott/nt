@@ -1,1 +1,2 @@
-# nt - a command-line note taking tool
+# nt
+Note - A simple command line note taking tool
