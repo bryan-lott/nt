@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+import argparse
+import os
+
+
+DATASTORE_FILENAME = os.path.join(os.path.dirname(__file__),
+                                  "datastore.md")
+
+
+def parse_cli():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--list", "-l",
+                       help="list all notes",
+                       action='store_true')
+    group.add_argument("--text", "-t",
+                       help="The text to save.",
+                       type=str,
+                       nargs='*')
+    args = parser.parse_args()
+    if args.text:
+        args.text = ' '.join(args.text)
+    return args
+
+
+def store_note(args):
+    with open(DATASTORE_FILENAME, 'a') as db:
+        db.write('- ' + args.text + '\n')
+
+
+def get_notes(args):
+    notes = []
+    with open(DATASTORE_FILENAME, 'r') as db:
+        found_notes_section = False
+        for line in db:
+            if line.startswith("## notes"):
+                found_notes_section = True
+                continue
+            if found_notes_section and line.startswith('-'):
+                notes.append(line.replace('\n', ''))
+    return notes
+
+
+def list_notes(args):
+    notes = get_notes(args)
+    for note in notes:
+        print(note)
+
+
+if __name__ == '__main__':
+    args = parse_cli()
+    if args.text:
+        fn = store_note
+    elif args.list:
+        fn = list_notes
+    else:
+        fn = lambda args: print("Invalid syntax")
+
+    fn(args)
+
