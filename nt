@@ -17,6 +17,9 @@ def parse_cli():
                        help="The text to save.",
                        type=str,
                        nargs='*')
+    group.add_argument("--delete", "-d",
+                       help="List notes and delete by note number",
+                       action='store_true')
     args = parser.parse_args()
     if args.text:
         args.text = ' '.join(args.text)
@@ -28,7 +31,7 @@ def store_note(args):
         db.write('- ' + args.text + '\n')
 
 
-def get_notes(args):
+def _get_notes(args):
     notes = []
     with open(DATASTORE_FILENAME, 'r') as db:
         found_notes_section = False
@@ -41,8 +44,29 @@ def get_notes(args):
     return notes
 
 
+def delete_notes(args):
+    with open(DATASTORE_FILENAME, 'r') as db:
+        db_contents = db.readlines()
+
+    note_number = None
+    while note_number != 'q':
+        notes = _get_notes(args)
+        for i, note in enumerate(notes):
+            print(f"{i} {note}")
+        print('Enter the note number to be deleted, "q" to quit')
+        note_number = input(": ")
+
+        if note_number == 'q':
+            continue
+
+        with open(DATASTORE_FILENAME, 'w') as db:
+            for line in db_contents:
+                if not line.startswith(notes[int(note_number)]):
+                    db.write(line + '\n')
+
+
 def list_notes(args):
-    notes = get_notes(args)
+    notes = _get_notes(args)
     for note in notes:
         print(note)
 
@@ -53,6 +77,8 @@ if __name__ == '__main__':
         fn = store_note
     elif args.list:
         fn = list_notes
+    elif args.delete:
+        fn = delete_notes
     else:
         fn = lambda args: print("Invalid syntax")
 
